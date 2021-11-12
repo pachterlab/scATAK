@@ -24,7 +24,7 @@ function usage()
     echo "######################################################################################"
     echo ""
     echo "scATAK [options]"
-    echo "-module=$MODULE [please choose 'quant' for single-cell quantification or 'track' for group bigwig track generation]"
+    echo "-module=$MODULE [please choose 'quant' for single-cell quantification, 'track' for group bigwig track generation, 'hic' for HiC related analysis]"
     echo "Please specify the following options:"
     echo "-id --sample_id=$SAMPLE_ID [a sample information sheet for fastq files, must be csv format]"
     echo "-wlist --white_list=$WLIST [choose '737K-cratac-v1.txt' or '737K-cratac-v1_rc.txt']"
