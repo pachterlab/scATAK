@@ -31,7 +31,7 @@ function usage()
     echo "-genome --genome_fasta=$GENOME [ENSEMBL genome fasta file for the organism of your interest]"
     echo "-gene --gene_gtf=$GENE [ENSEMBL gene gtf file for the organism of your interest]"
     echo "-bc --blen=$BLEN [length of cell barcode, default:16]"
-    echo "-bf --flen=$FLEN [length of biological feature, should be not more than R2 read length, default:40]"
+    echo "-bf --flen=$FLEN [length of biological feature, should not be longer than R2 read length, default:40]"
     echo "-bg --bc_group=$BCGROUP [a two-column text file with Barcode and Group. First line should be 'Barcode' and 'Group'] (for -module=track or -module=hic"
     echo "-bam --bam_file=$BAM [scATAK quant mapped bam file for sampleX] (for -module=track only)"
     echo "-hic --hic_bedpe=$HIC [hic interaction bedpe file] (for -module=hic only)"
