@@ -1,0 +1,419 @@
+#!/bin/bash
+export LANG=C
+export LC_ALL=C
+
+pid=$$
+MODULE="quant"
+SAMPLE_ID="sample_sheet.csv"
+GENOME="Mus_musculus.GRCm38.dna_rm.primary_assembly.fa"
+GENE="Mus_musculus.GRCm38.101.chr.gtf"
+WLIST="737K-cratac-v1.txt"
+BLEN=16
+FLEN=40
+THREAD=8
+BCGROUP="bc_group.txt"
+BAM="peak_calling/sampleX.bam"
+HIC="sample_significant.bedpe"
+BINSIZE=10000
+MTXDIR="atac_regions/atac_sampleX"
+
+function usage()
+{
+    echo ""
+    echo ""
+    echo "######################################################################################"
+    echo ""
+    echo "scATAK [options]"
+    echo "-module=$MODULE [please choose 'quant' for single-cell quantification or 'track' for group bigwig track generation]"
+    echo "Please specify the following options:"
+    echo "-id --sample_id=$SAMPLE_ID [a sample information sheet for fastq files, must be csv format]"
+    echo "-wlist --white_list=$WLIST [choose '737K-cratac-v1.txt' or '737K-cratac-v1_rc.txt']"
+    echo "-genome --genome_fasta=$GENOME [ENSEMBL genome fasta file for the organism of your interest]"
+    echo "-gene --gene_gtf=$GENE [ENSEMBL gene gtf file for the organism of your interest]"
+    echo "-bc --blen=$BLEN [length of cell barcode, default:16]"
+    echo "-bf --flen=$FLEN [length of biological feature, should be not more than R2 read length, default:40]"
+    echo "-bg --bc_group=$BCGROUP [a two-column text file with Barcode and Group. First line should be 'Barcode' and 'Group'] (for -module=track or -module=hic"
+    echo "-bam --bam_file=$BAM [scATAK quant mapped bam file for sampleX] (for -module=track only)"
+    echo "-hic --hic_bedpe=$HIC [hic interaction bedpe file] (for -module=hic only)"
+    echo "-bin --hic_binsize=$BINSIZE [hic interaction bin size, default 10kb] (for -module=hic only)"
+    echo "-mtxdir --region_mtxdir=$MTXDIR [atac region matrix directory for sampleX] (for -module=hic only)"
+    echo "-t --thread=$THREAD [threads to use, default:8]"
+    echo "-h --help [Help information]"
+    echo ""
+    echo ""
+    echo "See demo below for scATAK quant"
+    echo ""
+    echo "\$SCATAK_HOME/scATAK -module=quant -id=sample_sheet.csv -wlist=737K-cratac-v1_rc.txt -genome=Homo_sapiens.GRCh38.dna_rm.primary_assembly.fa -gene=Homo_sapiens.GRCh38.101.chr.gtf -bc=16 -bf=40 -t=4"
+    echo ""
+    echo "See demo below for scATAK track"
+    echo "\$SCATAK_HOME/scATAK -module=track -bg=$BCGROUP -bam=$BAM -genome=Homo_sapiens.GRCh38.dna_rm.primary_assembly.fa"
+    echo ""
+    echo "See demo below for scATAK hic"
+    echo "\$SCATAK_HOME/scATAK -module=hic -bg=$BCGROUP -hic=$HIC -bin=$BINSIZE -mtxdir=$MTXDIR -t=4"
+    echo "######################################################################################"
+    echo ""
+    echo ""
+}
+
+
+if [[ $1 == "" ]]; then
+        echo "Please type '\$SCATAK_HOME/scATAK -h' for help information!"
+        exit 0
+fi
+
+while [ "$1" != "" ]; do
+    PARAM=`echo $1 | awk -F= '{print $1}'`
+    VALUE=`echo $1 | awk -F= '{print $2}'`
+    case $PARAM in
+        -h | --help)
+            usage
+            exit
+            ;;
+        -module)
+            MODULE=$VALUE
+            ;;
+        -id | --sample_id)
+            SAMPLE_ID=$VALUE
+            ;;
+        -wlist | --white_list)
+            WLIST=$VALUE
+            ;;
+        -genome | --genome_assembly)
+            GENOME=$VALUE
+            ;;
+        -gene | --gene_gtf)
+            GENE=$VALUE
+            ;;
+        -bc | --blen)
+            BLEN=$VALUE
+            ;;
+        -bg | --bc_group)
+            BCGROUP=$VALUE
+            ;;
+        -bam | --bam_file)
+            BAM=$VALUE
+            ;;
+        -umi | --ulen)
+            ULEN=$VALUE
+            ;;
+        -bf | --flen)
+            FLEN=$VALUE
+            ;;
+        -hic | --hic_bedpe)
+            HIC=$VALUE
+            ;;
+        -bin | --hic_binsize)
+            BINSIZE=$VALUE
+            ;;
+        -mtxdir | --region_mtxdir)
+            MTXDIR=$VALUE
+            ;;
+        -t | --thread)
+            THREAD=$VALUE
+            ;;
+        *)
+            echo "ERROR: unknown parameter \"$PARAM\""
+            usage
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+start_time=`date +%s`
+
+
+if [[ $MODULE == "quant" ]]; then
+echo "";
+echo "Process ID is $pid";
+echo "scATAK MODULE to run is $MODULE";
+echo "Sample ID is $SAMPLE_ID";
+echo "Barcode whitelist is $WLIST";
+echo "Genome fasta is $GENOME";
+echo "Gene gtf is $GENE";
+echo "Barcode length is $BLEN";
+echo "Feature length is $FLEN";
+echo "Number of threads is $THREAD";
+echo "";
+echo "";
+
+
+mkdir -p peak_calling
+mkdir -p temp
+echo "Start making minimap2 index";
+start_time_n=`date +%s`
+
+$SCATAK_HOME/bin/minimap2 -d peak_calling/minimap2_index.mmi $GENOME
+echo "Index contruction is complete";
+end_time_n=`date +%s`
+echo "Real time `expr $end_time_n - $start_time_n` seconds."
+echo "";
+echo "";
+
+
+while read line;
+do
+IFS=',' read -r -a cols <<< "$line"
+sample_id="${cols[0]}"
+sample_type="${cols[1]}"
+r1_fastq="${cols[2]}"
+r2_fastq="${cols[3]}"
+r3_fastq="${cols[4]}"
+echo "R1 read file is $r1_fastq";
+echo "R2 read file is $r2_fastq";
+echo "R3 read file is $r3_fastq";
+
+echo "Start genome alignment and peak calling for $sample_id";
+start_time_n=`date +%s`
+
+$SCATAK_HOME/bin/minimap2 -ax sr -t$THREAD peak_calling/minimap2_index.mmi \
+   <(paste <(zcat $r1_fastq) <(zcat $r2_fastq) | awk -v blen="$BLEN" '{if(NR%4==1) header=$1; if(NR%4==2) print header"_"substr($2, 0, blen)"_\n"$1; if(NR%4==3 || NR%4==0) print $1;}') \
+   <(paste <(zcat $r3_fastq) <(zcat $r2_fastq) | awk -v blen="$BLEN" '{if(NR%4==1) header=$1; if(NR%4==2) print header"_"substr($2, 0, blen)"_\n"$1; if(NR%4==3 || NR%4==0) print $1;}') \
+   > peak_calling/${sample_id}.sam
+
+$SCATAK_HOME/bin/sambamba view -t $THREAD -f bam -S -o peak_calling/${sample_id}.bam peak_calling/${sample_id}.sam
+rm peak_calling/${sample_id}.sam
+$SCATAK_HOME/bin/sambamba sort -n -t $THREAD -m 8GB --tmpdir=./temp peak_calling/${sample_id}.bam
+#$SCATAK_HOME/bin/sambamba index peak_calling/${sample_id}.sorted.bam
+$SCATAK_HOME/bin/Genrich -t peak_calling/${sample_id}.sorted.bam -o peak_calling/${sample_id}.narrowPeak -f peak_calling/${sample_id}_peaks.log -v
+echo "Peak calling is complete for $sample_id";
+end_time_n=`date +%s`
+echo "Real time `expr $end_time_n - $start_time_n` seconds."
+echo "";
+echo "";
+done < $SAMPLE_ID
+
+echo "Start making kallisto index for ATAC peak regions";
+start_time_n=`date +%s`
+cat peak_calling/*narrowPeak | $SCATAK_HOME/bin/bedtools sort | $SCATAK_HOME/bin/bedtools merge > peak_calling/atac_all_peaks.bed
+
+mkdir -p atac_regions
+$SCATAK_HOME/bin/bedtools getfasta -fi $GENOME -bed peak_calling/atac_all_peaks.bed -fo atac_regions/atac_all_peaks.fa
+$SCATAK_HOME/bin/kallisto index -i atac_regions/atac_all_peaks.ki atac_regions/atac_all_peaks.fa
+cat atac_regions/atac_all_peaks.fa | awk '{if($1~/>/)print $1"\t"$1"\t"$1}' > atac_regions/tr2g.txt
+sed -i 's/>//g' atac_regions/tr2g.txt
+echo "Index contruction for peak regions is complete";
+end_time_n=`date +%s`
+echo "Real time `expr $end_time_n - $start_time_n` seconds."
+
+
+mkdir -p atac_genes
+awk '{if($3=="gene" && $7=="+") print $1"\t"$4"\t"$4"\t"$14; else if($3=="gene" && $7=="-") print $1"\t"$5"\t"$5"\t"$14;}' $GENE > atac_genes/gene_tss.bed
+sed -i 's/"//g' atac_genes/gene_tss.bed
+sed -i 's/;//g' atac_genes/gene_tss.bed
+$SCATAK_HOME/bin/bedtools sort -i atac_genes/gene_tss.bed > atac_genes/gene_tss_sort.bed
+mv atac_genes/gene_tss_sort.bed  atac_genes/gene_tss.bed
+
+
+while read line;
+do
+IFS=',' read -r -a cols <<< "$line"
+sample_id="${cols[0]}"
+sample_type="${cols[1]}"
+r1_fastq="${cols[2]}"
+r2_fastq="${cols[3]}"
+r3_fastq="${cols[4]}"
+
+echo "Start quantification of single-cell ATAC region accessibility for $sample_id";
+start_time_n=`date +%s`
+$SCATAK_HOME/bin/kallisto bus -i atac_regions/atac_all_peaks.ki -x 1,0,$BLEN:2,0,$FLEN:0,0,$FLEN \
+        -o atac_regions/atac_${sample_id} -t $THREAD $r1_fastq $r2_fastq $r3_fastq
+
+$SCATAK_HOME/bin/bustools correct -w $SCATAK_HOME/lib/$WLIST -p atac_regions/atac_${sample_id}/output.bus | $SCATAK_HOME/bin/bustools sort -t $THREAD -o atac_regions/atac_${sample_id}/output.sort.bus -
+$SCATAK_HOME/bin/bustools inspect atac_regions/atac_${sample_id}/output.sort.bus
+
+$SCATAK_HOME/bin/bustools count -o atac_regions/atac_${sample_id}/atac --genecounts -g atac_regions/tr2g.txt \
+        -e atac_regions/atac_${sample_id}/matrix.ec -t atac_regions/atac_${sample_id}/transcripts.txt \
+        atac_regions/atac_${sample_id}/output.sort.bus
+echo "Quantification of single-cell ATAC region accessibility is complete for $sample_id";
+end_time_n=`date +%s`
+echo "Real time `expr $end_time_n - $start_time_n` seconds."
+echo "";
+echo "";
+
+mkdir -p atac_genes/atac_${sample_id}
+echo " Start peak association to the nearest gene tss (max 50kb) and generate gene activity matrix for $sample_id";
+start_time_n=`date +%s`
+cp atac_regions/atac_${sample_id}/atac.genes.txt atac_genes/atac_${sample_id}/region.bed
+sed -i 's/:/\t/g' atac_genes/atac_${sample_id}/region.bed
+sed -i 's/-/\t/g' atac_genes/atac_${sample_id}/region.bed
+awk '{print $1"\t"int(($2+$3)/2)"\t"int(($2+$3)/2)"\t"$1":"$2"-"$3}' atac_genes/atac_${sample_id}/region.bed > atac_genes/atac_${sample_id}/region_center.bed
+$SCATAK_HOME/bin/bedtools closest -a atac_genes/atac_${sample_id}/region_center.bed -b atac_genes/gene_tss.bed -d > atac_genes/atac_${sample_id}/region_tss_association.txt
+rm atac_genes/atac_${sample_id}/region_center.bed
+awk '{if($9<=2000) print $4"\t"$8"\t"1; if($9>2000 && $9<=5000) print $4"\t"$8"\t"0.7; if($9>5000 && $9<=10000) print $4"\t"$8"\t"0.5; if($9>10000 && $9<=20000) print $4"\t"$8"\t"0.25; if($9>20000 && $9<=50000) print $4"\t"$8"\t"0.03;}' atac_genes/atac_${sample_id}/region_tss_association.txt > atac_genes/atac_${sample_id}/region_tss_score.txt
+awk '{print $4}' atac_genes/gene_tss.bed | sort | uniq > atac_genes/atac_${sample_id}/gene.genes.txt
+cp atac_regions/atac_${sample_id}/atac.barcodes.txt atac_genes/atac_${sample_id}/gene.barcodes.txt
+awk 'NR==FNR{j++;Arr[$1]=NR;next} ($1 in Arr){print Arr[$1]"\t"$2"\t"$3}' atac_regions/atac_${sample_id}/atac.genes.txt atac_genes/atac_${sample_id}/region_tss_score.txt > atac_genes/atac_${sample_id}/region_index_tss_score.txt
+awk 'NR==FNR{j++;Arr[$1]=NR;next} ($2 in Arr){print $1"\t"Arr[$2]"\t"$3}' atac_genes/atac_${sample_id}/gene.genes.txt atac_genes/atac_${sample_id}/region_index_tss_score.txt > atac_genes/atac_${sample_id}/region_index_tss_index_score.txt
+rm atac_genes/atac_${sample_id}/region_index_tss_score.txt
+BC=1
+last_line=$(wc -l < atac_regions/atac_${sample_id}/atac.mtx)
+awk -v bc=$BC -v last=$last_line 'NR==FNR{gene[$1]=$2;score[$1]=$3;next} ($2 in gene){if(bc!=$1 || NR==last){for (key in sum) {print bc" "key" "sum[key];} delete sum; bc=$1;} sum[gene[$2]]+=score[$2];}' atac_genes/atac_${sample_id}/region_index_tss_index_score.txt atac_regions/atac_${sample_id}/atac.mtx > atac_genes/atac_${sample_id}/gene.mtx
+echo "$(wc -l < atac_regions/atac_${sample_id}/atac.barcodes.txt) $(wc -l < atac_genes/atac_${sample_id}/gene.genes.txt) $(wc -l < atac_genes/atac_${sample_id}/gene.mtx)" > atac_genes/atac_${sample_id}/gene_mtx_sum
+head -3 atac_regions/atac_${sample_id}/atac.mtx | cat - atac_genes/atac_${sample_id}/gene_mtx_sum  atac_genes/atac_${sample_id}/gene.mtx > atac_genes/atac_${sample_id}/gene2.mtx
+mv atac_genes/atac_${sample_id}/gene2.mtx atac_genes/atac_${sample_id}/gene.mtx
+rm atac_genes/atac_${sample_id}/region.bed
+rm atac_genes/atac_${sample_id}/gene_mtx_sum
+echo "Quantification of single-cell ATAC gene activity is complete for $sample_id";
+end_time_n=`date +%s`
+echo "Real time `expr $end_time_n - $start_time_n` seconds."
+echo "";
+echo "";
+done < $SAMPLE_ID
+fi
+
+if [[ $MODULE == "track" ]]; then
+echo "";
+echo "Process ID is $pid";
+echo "scATAK MODULE to run is $MODULE";
+echo "Barcode group information file is $BCGROUP";
+echo "scATAK produced bam alignment file is $BAM";
+echo "Genome fasta is $GENOME";
+echo "";
+echo "";
+sample_id=$(basename ${BAM%.bam})
+
+mkdir -p tracks
+if [ ! -f tracks/${sample_id}.bed ]; then
+   $SCATAK_HOME/bin/bedtools bamtobed -i peak_calling/${sample_id}.bam > tracks/${sample_id}.bed
+fi
+
+awk -v last=$(wc -l < $GENOME) '{if($1!~"^>") len=len+length($1); else {if(chr!="") printf "%s\t%d\n",chr,len; chr=$1; len=0;}; if(NR==last) printf "%s\t%d\n",chr,len;}' $GENOME > tracks/chrom_size.txt
+header=$(head -1 $GENOME)
+if [[ "$header" =~ "^>chr" ]]
+then
+   sed -i 's/>//g' tracks/chrom_size.txt
+else
+   sed -i 's/>/chr/g' tracks/chrom_size.txt
+   sed -i 's/chrMT/chrM/' tracks/chrom_size.txt
+fi
+
+groups=$(awk '{if($1!~"^Barcode") print $2}' $BCGROUP | sort | uniq)
+for group in ${groups};
+do
+echo $group;
+
+awk -v list="$group" '{if($2==list) print $1}' $BCGROUP > tracks/${sample_id}_${group}.txt
+#cell_number=$(wc -l < tracks/${sample_id}_${group}.txt)
+#echo $cell_number
+#scale_factor=$(bc <<< "scale=6;1/$(echo $cell_number)")
+echo $scale_factor
+
+awk -F '_' 'NR==FNR{Arr[$1]++;next} ($2 in Arr) {print $0}' tracks/${sample_id}_${group}.txt tracks/${sample_id}.bed | sort -T tracks -k 1,1 | awk '{if($1!~"^chr") print "chr"$0; else print $0;}' > tracks/${sample_id}_${group}.bed
+
+read_number=$(wc -l < tracks/${sample_id}_${group}.bed)
+echo $read_number
+scale_factor=$(bc <<< "scale=6;10000000/$(echo $read_number)")
+
+$SCATAK_HOME/bin/bedtools genomecov -i tracks/${sample_id}_${group}.bed -scale $scale_factor -g tracks/chrom_size.txt -bg > tracks/${sample_id}_${group}.bedgraph
+$SCATAK_HOME/bin/bedGraphToBigWig tracks/${sample_id}_${group}.bedgraph tracks/chrom_size.txt tracks/${sample_id}_${group}.bw
+done
+fi
+
+
+if [[ $MODULE == "hic" ]]; then
+  mkdir -p atac_hic
+  echo "";
+  echo "Process ID is $pid";
+  echo "scATAK MODULE to run is $MODULE";
+  echo "Barcode group information file is $BCGROUP";
+  echo "HiC interaction bedpe file is $HIC";
+  echo "Hic genome bin size is $BINSIZE";
+  echo "ATAC-seq region quantification mtx output directory is $MTXDIR";
+  echo "";
+  echo "";
+  echo "";
+  base_dir=$(basename ${MTXDIR%atac_regions/})
+  sample_id=${base_dir#"atac_"}
+  mkdir -p atac_hic/${sample_id}
+  echo "Start generating putative HiC interaction map for each single cell of ${sample_id}";
+  echo "";
+
+  cp atac_regions/atac_${sample_id}/atac.genes.txt atac_hic/${sample_id}/atac.bed
+  header=$(head -1 atac_hic/${sample_id}/atac.bed)
+  sed -i 's/:/\t/g' atac_hic/${sample_id}/atac.bed
+  sed -i 's/-/\t/g' atac_hic/${sample_id}/atac.bed
+
+  if ! [[ "$header" =~ "chr" ]]
+  then
+    awk '{print "chr"$0}' atac_hic/${sample_id}/atac.bed > atac_hic/${sample_id}/atac_chr.bed
+    mv  atac_hic/${sample_id}/atac_chr.bed  atac_hic/${sample_id}/atac.bed
+  fi
+
+  awk -v binsize=$BINSIZE '{print NR" "$1":"int(($2+$3)/2/binsize)*binsize"-"int(($2+$3)/2/binsize+1)*binsize}'  atac_hic/${sample_id}/atac.bed >  atac_hic/${sample_id}/atac_bin.txt
+  awk '{print $2}'  atac_hic/${sample_id}/atac_bin.txt | uniq >  atac_hic/${sample_id}/bin.genes.txt
+
+  awk 'NR==FNR{j++;Arr[$1]=NR;next} ($2 in Arr){print $1" "Arr[$2]}' atac_hic/${sample_id}/bin.genes.txt atac_hic/${sample_id}/atac_bin.txt > atac_hic/${sample_id}/atac_bin_convert.txt
+  awk 'NR==FNR{j++;Arr[$1]=$2;next} ($2 in Arr){print $1" "Arr[$2]" 1"}' atac_hic/${sample_id}/atac_bin_convert.txt atac_regions/atac_${sample_id}/atac.mtx | uniq > atac_hic/${sample_id}/bin.mtx
+  awk '{print $1":"$2"-"$3"\t"$4":"$5"-"$6}' $HIC > atac_hic/${sample_id}/hic.txt
+#  sed -i 's/chr//g' hic.txt
+  awk 'NR==FNR{j++;Arr[$1]=NR;next} ($1 in Arr && $2 in Arr){print Arr[$1]"-"Arr[$2]}' atac_hic/${sample_id}/bin.genes.txt atac_hic/${sample_id}/hic.txt > atac_hic/${sample_id}/hic_atac.txt
+
+tot_lines=$(wc -l < $BCGROUP)
+echo "Total cell number is $((tot_lines-1))"
+
+chunk_length=$((tot_lines / $THREAD + 1))
+echo "Number of cells in each chunk is $chunk_length"
+split -l $chunk_length -d -a 3 $BCGROUP bc_chunk
+ls bc_chunk* > chunk_id.txt
+cp atac_regions/atac_${sample_id}/atac.barcodes.txt atac_hic/${sample_id}/hic.barcodes.txt
+while read chunk;
+do
+  awk 'NR==FNR{Arr[$1]=NR;next} ($1 in Arr){print Arr[$1];}' atac_hic/${sample_id}/hic.barcodes.txt ${chunk} > atac_hic/${sample_id}/index_${chunk}.txt
+  awk 'NR==FNR{Arr[$1]++;next} ($1 in Arr){print}' atac_hic/${sample_id}/index_${chunk}.txt atac_hic/${sample_id}/bin.mtx > atac_hic/${sample_id}/bin_${chunk}.mtx
+  awk -F '-' '{print $1"\n"$2}' atac_hic/${sample_id}/hic_atac.txt | awk 'NR==FNR{Arr[$1]++;next} ($2 in Arr){print}' - atac_hic/${sample_id}/bin_${chunk}.mtx > atac_hic/${sample_id}/bin_${chunk}_atac.mtx
+  awk 'NR==FNR{hic[$1]++;next} {for(i in Arr) {if(Brr[i]==$1){pair=Arr[i]"-"$2; if(Arr[i]!=$2 && pair in hic) print $1" "pair;} else {j=0; delete Arr; delete Brr}}} {j++; Arr[j]=$2; Brr[j]=$1;}' \
+	 atac_hic/${sample_id}/hic_atac.txt  atac_hic/${sample_id}/bin_${chunk}_atac.mtx >  atac_hic/${sample_id}/bin_interact_${chunk}.txt &
+done < chunk_id.txt
+
+wait
+
+cat atac_hic/${sample_id}/bin_interact_bc_chunk* > atac_hic/${sample_id}/hic_interact.mtx
+rm atac_hic/${sample_id}/bin_interact_bc_chunk*
+rm atac_hic/${sample_id}/index_bc_chunk*
+rm bc_chunk*
+rm chunk_id.txt
+rm atac_hic/${sample_id}/bin_bc_chunk*.mtx
+awk '{print $2}' atac_hic/${sample_id}/hic_interact.mtx | sort | uniq > atac_hic/${sample_id}/hic.genes.txt
+awk 'NR==FNR{Arr[$1]=NR;next} ($2 in Arr){print $1" "Arr[$2]" 1";}' atac_hic/${sample_id}/hic.genes.txt atac_hic/${sample_id}/hic_interact.mtx > atac_hic/${sample_id}/hic.mtx
+rm  atac_hic/${sample_id}/hic_interact.mtx
+sed -i 's/-/ /g' atac_hic/${sample_id}/hic.genes.txt
+awk 'NR==FNR{Arr[NR]=$1;next} {print Arr[$1]"_"Arr[$2]}' atac_hic/${sample_id}/bin.genes.txt atac_hic/${sample_id}/hic.genes.txt > atac_hic/${sample_id}/hic.genes2.txt
+mv atac_hic/${sample_id}/hic.genes2.txt atac_hic/${sample_id}/hic.genes.txt
+
+echo "$(wc -l < atac_hic/${sample_id}/hic.barcodes.txt) $(wc -l < atac_hic/${sample_id}/hic.genes.txt) $(wc -l < atac_hic/${sample_id}/hic.mtx)" > atac_hic/${sample_id}/hic_mtx_sum
+head -3 atac_regions/atac_${sample_id}/atac.mtx | cat - atac_hic/${sample_id}/hic_mtx_sum atac_hic/${sample_id}/hic.mtx > atac_hic/${sample_id}/hic2.mtx
+mv atac_hic/${sample_id}/hic2.mtx atac_hic/${sample_id}/hic.mtx
+rm atac_hic/${sample_id}/hic_mtx_sum
+
+echo "Complete generating HiC interaction matrix for ${sample_id}"
+
+groups=$(awk '{if($1!~"^Barcode") print $2}' $BCGROUP | sort | uniq)
+for group in ${groups};
+do
+echo "Generate HiC bedpe track for $group";
+
+awk -v list="$group" '{if($2==list) print $1}' $BCGROUP > atac_hic/${sample_id}/${group}.txt
+cell_number=$(wc -l < tracks/${sample_id}_${group}.txt)
+echo "Group_${group} has $cell_number single cells"
+scale_factor=$(bc <<< "scale=4;1/$(echo $cell_number)")
+echo "Scale factor is $scale_factor"
+
+awk 'NR==FNR{Arr[$1]=NR;next} ($1 in Arr) {print Arr[$1]}' atac_hic/${sample_id}/hic.barcodes.txt atac_hic/${sample_id}/${group}.txt | awk 'NR==FNR{Arr[$1]++;next} ($1 in Arr) {print}' - atac_hic/${sample_id}/hic.mtx > atac_hic/${sample_id}/hic_${group}.mtx
+
+awk 'NR==FNR{Arr[NR]=$1;next} ($2 in Arr) {print Arr[$2]}' atac_hic/${sample_id}/hic.genes.txt atac_hic/${sample_id}/hic_${group}.mtx | sort | uniq -c | awk -v scale=$scale_factor '{print $2"\t"$1*scale}' > atac_hic/${sample_id}/hic_${group}.bedpe
+sed -i 's/_/\t/g' atac_hic/${sample_id}/hic_${group}.bedpe
+sed -i 's/-/\t/g' atac_hic/${sample_id}/hic_${group}.bedpe
+sed -i 's/:/\t/g' atac_hic/${sample_id}/hic_${group}.bedpe
+done
+echo "HiC track for $group is ready"
+
+fi
+
+
+echo "Program scATAK is complete";
+end_time=`date +%s`
+echo "Real time `expr $end_time - $start_time` seconds."
+rm -rf temp
+#pidstat -r -p $pid
+
