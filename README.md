@@ -1,6 +1,6 @@
 ## scATAK tool for pre-processing 10X single-cel ATAC-seq data.
 
-### This repository hosts a bioinformatics tool called `scATAK` that wraps several bioinformatics tools (e.g., kallisto, bustools) for pre-processing single-cell ATAC-seq data.
+#### This repository hosts a bioinformatics tool called `scATAK` that wraps several bioinformatics tools (e.g., kallisto, bustools) for pre-processing single-cell ATAC-seq data.
 
 ### Installation
 1) Download scATAK
