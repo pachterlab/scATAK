@@ -1,5 +1,8 @@
 ### scATAK tool for pre-processing 10X single-cel ATAC-seq data.
-
+#####
+##### A schematic workflow is shown below:
+![Figure not found](Figure1_final.png)
+#####
 ### Installation
 1) Download scATAK
 ```
