@@ -51,5 +51,5 @@ $SCATAK_HOME/scATAK -module=hic -bg=bc_group.txt -hic=sample_significant.bedpe -
 ### Citation:
 ```
 Please cite the following paper when you use scATAK:
-Gao, F. & Pachter, L. (2021). Efficient pre-processing of single-cell RNA-seq. BioRxiv
+Gao, F. & Pachter, L. (2021). Efficient pre-processing of single-cell ATAC-seq data. BioRxiv
 ```
