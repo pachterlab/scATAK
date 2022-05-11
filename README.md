@@ -9,7 +9,7 @@
 ### Installation
 1) Download the latest scATAK from https://github.com/pachterlab/scATAK/releases
 ```
-tar -xvzf scATAK_v1.0.0
+tar -xvzf scATAK_v1.x.0.tar.gz
 chmod +x scATAK/scATAK
 ```
 
