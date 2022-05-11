@@ -7,9 +7,9 @@
 ![Figure not found](Figure1_final.png)
 #####
 ### Installation
-1) Download scATAK
+1) Download the latest scATAK from https://github.com/pachterlab/scATAK/releases
 ```
-git clone https://github.com/pachterlab/scATAK.git
+tar -xvzf scATAK_v1.0.0
 chmod +x scATAK/scATAK
 ```
 
