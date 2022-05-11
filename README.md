@@ -1,3 +1,6 @@
+[![GitHub Downloads](https://img.shields.io/github/downloads/pachterlab/scATAK/total.svg?style=social&logo=github&label=Download)](https://github.com/pachterlab/scATAK/releases)
+
+
 ### scATAK: pre-processing of 10X Genomics single-cell ATAC-seq data.
 #####
 ##### The scATAK workflow is shown below:
