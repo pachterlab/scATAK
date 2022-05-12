@@ -57,7 +57,7 @@ Please cite the following paper when you use scATAK:
 Gao, F. & Pachter, L. (2021). Efficient pre-processing of single-cell ATAC-seq data. BioRxiv
 ```
 
-### Benchmarks
+### Benchmarks (based on v1.0.0)
 ```
 https://github.com/pachterlab/GP_2021_4
 ```
