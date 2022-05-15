@@ -44,12 +44,14 @@ Please specify the following options:
 |-------------|------------------|-------------|---------------|-------------------------|-----------------|
 #####
 ##### See a demo sample_sheet.csv below:
+```
 male1,male,B8_S1_L001_R1_001.fastq.gz,B8_S1_L001_R2_001.fastq.gz,B8_S1_L001_R3_001.fastq.gz,/home/fgao/scATAK/lib/737K-cratac-v1.txt
 male2,male,B9_S1_L003_R1_001.fastq.gz,B9_S1_L003_R2_001.fastq.gz,B9_S1_L003_R3_001.fastq.gz,/home/fgao/scATAK/lib/737K-cratac-v1.txt
 male3,male,B10_S1_L004_R1_001.fastq.gz,B10_S1_L004_R2_001.fastq.gz,B10_S1_L004_R3_001.fastq.gz,/home/fgao/scATAK/lib/737K-cratac-v1.txt
 female1,female,4_F_S1_L004_R1_001.fastq.gz,4_F_S1_L004_R2_001.fastq.gz,4_F_S1_L004_R3_001.fastq.gz,/home/fgao/scATAK/lib/737K-cratac-v1.txt
 female2,female,5_F_S1_L001_R1_001.fastq.gz,5_F_S1_L001_R2_001.fastq.gz,5_F_S1_L001_R3_001.fastq.gz,/home/fgao/scATAK/lib/737K-cratac-v1.txt
 female3,female,6_F_S1_L002_R1_001.fastq.gz,6_F_S1_L002_R2_001.fastq.gz,6_F_S1_L002_R3_001.fastq.gz,/home/fgao/scATAK/lib/737K-cratac-v1.txt
+```
 #####
 #####
 ##### bc_group.txt
@@ -57,6 +59,7 @@ female3,female,6_F_S1_L002_R1_001.fastq.gz,6_F_S1_L002_R2_001.fastq.gz,6_F_S1_L0
 |-------------|------------------|
 #####
 ##### See a demo group_bc.txt below:
+```
 Barcodes Groups
 AAACGAAAGCCTCGCA Oligodendrocytes
 AAACGAAAGGAAGAAC Oligodendrocytes
@@ -65,6 +68,7 @@ AAACGAACATTACTCT Microglia
 AAACGAATCACTCGGG Oligodendrocytes
 AAACGAATCCTTACGC Oligodendrocytes
 AAACGAATCGATCTTT Astrocytes
+```
 #####
 #####
 ### Quick start:
