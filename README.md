@@ -9,7 +9,7 @@
 ### Installation
 1) Download the latest scATAK from https://github.com/pachterlab/scATAK/releases
 ```
-tar -xvzf scATAK_v1.x.0.tar.gz
+tar -xvzf scATAK_v1.1.0.tar.gz
 chmod +x scATAK/scATAK
 ```
 
@@ -25,7 +25,6 @@ scATAK [options]
 -module=quant [please choose 'quant' for single-cell quantification, 'track' for group bigwig track generation, 'hic' for HiC related analysis]
 Please specify the following options:
 -id --sample_id=sample_sheet.csv [a sample information sheet for fastq files, must be csv format]
--wlist --white_list=737K-cratac-v1.txt [choose '737K-cratac-v1.txt' or '737K-cratac-v1_rc.txt']
 -genome --genome_fasta=Mus_musculus.GRCm38.dna_rm.primary_assembly.fa [ENSEMBL genome fasta file for the organism of your interest]
 -gene --gene_gtf=Mus_musculus.GRCm38.101.chr.gtf [ENSEMBL gene gtf file for the organism of your interest]
 -bc --blen=16 [length of cell barcode, default:16]
