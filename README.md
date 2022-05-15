@@ -58,7 +58,7 @@ female3,female,6_F_S1_L002_R1_001.fastq.gz,6_F_S1_L002_R2_001.fastq.gz,6_F_S1_L0
 | Cell Barcodes | Cell Type Group |
 |-------------|------------------|
 #####
-##### See a demo group_bc.txt below:
+##### See a demo bc_group.txt below:
 ```
 Barcodes Groups
 AAACGAAAGCCTCGCA Oligodendrocytes
