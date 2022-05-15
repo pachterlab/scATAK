@@ -38,6 +38,13 @@ Please specify the following options:
 -h --help [Help information]
 ```
 
+### INPUT FILE FORMAT
+#####sample_sheet.csv
+| sample ID | Sample Group | R1 Biological Read FASTQ | R2 Cell Barcode Read FASTQ | R3 Biological Read FASTQ | whitelist file |
+|-------------|------------------|-------------|---------------|-------------------------|-----------------|
+
+#####
+
 ### Quick start:
 ```
 #Quant module
