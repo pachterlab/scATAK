@@ -75,7 +75,7 @@ AAACGAATCGATCTTT Astrocytes
 ### Quick start:
 ```
 #Quant module
-$SCATAK_HOME/scATAK -module=quant -id=sample_sheet.csv -wlist=737K-cratac-v1.txt -genome=Homo_sapiens.GRCh38.dna_rm.primary_assembly.fa -gene=Homo_sapiens.GRCh38.101.chr.gtf -bc=16 -bf=40 -t=4
+$SCATAK_HOME/scATAK -module=quant -id=sample_sheet.csv -genome=Homo_sapiens.GRCh38.dna_rm.primary_assembly.fa -gene=Homo_sapiens.GRCh38.101.chr.gtf -bc=16 -bf=40 -t=4
 
 #Track module
 $SCATAK_HOME/scATAK -module=track -bg=bc_group.txt -bam=peak_calling/sampleX.bam -genome=Homo_sapiens.GRCh38.dna_rm.primary_assembly.fa
