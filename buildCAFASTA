@@ -1,6 +1,27 @@
 #!/bin/bash
 export LANG=C
 export LC_ALL=C
+# for building the index what do we need?
+# Input: 
+# 1. genome primary assembly (.fa.gz)
+# 2. R1.fastq.gz, R2.fastq.gz <-- paired end reads, I1.fastq.gz (i5 index, 10x barcode)
+# Output
+# 1. peaks.fa
+# 2. peaks.bed
+
+# For peak to gene association what do we need?
+# Input:
+# 1. Genome.gtf -> tss
+# 2. Peaks.bed (from index building)
+# Output:
+# 1. matrix summed on grouped genes
+# 2. genes.txt 
+
+# For read quantification
+# 1. 
+# 
+# 
+# 
 
 pid=$$
 MODULE="quant"
