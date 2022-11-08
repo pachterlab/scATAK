@@ -1,4 +1,13 @@
 #!/bin/bash
+# Input:
+# 1. Genome FASTA
+# 2. Cell BC FASTQ
+# 3. Read 1 FASTQ
+# 4. Read 2 FASTQ
+# Output:
+# 1. peaks.fa
+# 2. t2g.txt
+# 3. peaks.bed
 
 usage () {
     echo "Usage: $0 [options]
@@ -63,6 +72,7 @@ fi
 
 BLEN=16 # Could be derived from fastq?
 mkdir -p tmp
+mkdir -p $OUTPUT
 
 # Build minimap2 index
 minimap2 -d tmp/minimap2_index.mmi $GENOME
@@ -86,12 +96,12 @@ sambamba sort -n -t 8 -m 8GB --tmpdir=./tmp tmp/genome.bam
 Genrich -t tmp/genome.sorted.bam -o tmp/genome.narrowPeak -f tmp/genome_peaks.log -v
 
 # Sort the peaks (prepare for slicing genome)
-cat tmp/genome.narrowPeak | bedtools sort | bedtools merge > tmp/peaks.bed
+cat tmp/genome.narrowPeak | bedtools sort | bedtools merge > $OUTPUT/peaks.bed
 
 # Create peak FASTA
-bedtools getfasta -fi $GENOME -bed tmp/peaks.bed -fo $OUTPUT/peaks.fa
-cat tmp/peaks.fa | awk '{if($1~/>/)print $1"\t"$1"\t"$1}' > tmp/t2g.txt
-sed -i 's/>//g' tmp/t2g.txt
+bedtools getfasta -fi $GENOME -bed peaks.bed -fo $OUTPUT/peaks.fa
+cat $OUTPUT/peaks.fa | awk '{if($1~/>/)print $1"\t"$1"\t"$1}' > $OUTPUT/t2g.txt
+sed -i 's/>//g' $OUTPUT/t2g.txt
 
 # # Get gene TSS from GTF 
 # awk '{if($3=="gene" && $7=="+") print $1"\t"$4"\t"$4"\t"$14; else if($3=="gene" && $7=="-") print $1"\t"$5"\t"$5"\t"$14;}' $GTF > tss.bed
