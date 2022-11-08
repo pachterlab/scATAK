@@ -4,11 +4,11 @@ usage () {
     echo "Usage: $0 [options]
     
     Options:
-    -o, --output            output FASTA
-    -g, --genome            Genome primary assembly (fa.gz)
-    -cbc, --cellbc          Fastq for the cell barcode
-    -r1, --read1            Fastq for biological paired end 1
-    -r2, --read2            Fastq for biological paired end 2
+    -o, --output           output FASTA
+    -g, --genome           Genome primary assembly (fa.gz)
+    -c, --cellbc           Fastq for the cell barcode
+    -1, --read1            Fastq for biological paired end 1
+    -2, --read2            Fastq for biological paired end 2
     "
     exit 1
 }
