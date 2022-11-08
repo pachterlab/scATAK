@@ -85,18 +85,19 @@ minimap2 -ax sr -t 8 tmp/minimap2_index.mmi \
    <(paste <(zcat $R2FQ) <(zcat $CBCFQ) | awk -v blen="$BLEN" '{if(NR%4==1) header=$1; if(NR%4==2) print header"_"substr($2, 0, blen)"_\n"$1; if(NR%4==3 || NR%4==0) print $1;}') \
    > tmp/genome.sam
 
-# Convert SAM to BAM
-sambamba view -t 8 -f bam -S -o tmp/genome.bam tmp/genome.sam
+# # Convert SAM to BAM
+# sambamba view -t 8 -f bam -S -o tmp/genome.bam tmp/genome.sam
 
-# Delete SAM
-rm tmp/genome.sam
+# # Delete SAM
+# rm tmp/genome.sam
 
-# Sort BAM
-sambamba sort -n -t 8 -m 8GB --tmpdir=./tmp tmp/genome.bam
+# # Sort BAM
+# sambamba sort -n -t 8 -m 8GB --tmpdir=./tmp tmp/genome.bam
 
 # # Convert sam to bam and sort
-# samtools view -@ 8 -o tmp/genome.bam -b tmp/genome.sam
-# samtools sort -@ 8 -o tmp/genome.sorted.bam -m 8G tmp/genome.bam 
+samtools view -@ 8 -o tmp/genome.bam -b tmp/genome.sam
+rm tmp/genome.sam
+samtools sort -@ 8 -o tmp/genome.sorted.bam -m 8G tmp/genome.bam 
 
 # Call peaks from BAM
 Genrich -t tmp/genome.sorted.bam -o tmp/genome.narrowPeak -f tmp/genome_peaks.log -v
