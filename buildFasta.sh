@@ -97,7 +97,7 @@ minimap2 -ax sr -t 8 tmp/minimap2_index.mmi \
 # # Convert sam to bam and sort
 samtools view -@ 8 -o tmp/genome.bam -b tmp/genome.sam
 rm tmp/genome.sam
-samtools sort -@ 8 -o tmp/genome.sorted.bam -m 8G tmp/genome.bam 
+samtools sort -n -@ 8 -o tmp/genome.sorted.bam -m 8G tmp/genome.bam 
 
 # Call peaks from BAM
 Genrich -t tmp/genome.sorted.bam -o tmp/genome.narrowPeak -f tmp/genome_peaks.log -v
