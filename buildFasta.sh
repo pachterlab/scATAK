@@ -74,6 +74,8 @@ BLEN=16 # Could be derived from fastq?
 mkdir -p tmp
 mkdir -p $OUTPUT
 
+zcat $GENOME | fold -w 80 > tmp/genome.fa
+
 # Build minimap2 index
 minimap2 -d tmp/minimap2_index.mmi $GENOME
 
@@ -92,6 +94,10 @@ rm tmp/genome.sam
 # Sort BAM
 sambamba sort -n -t 8 -m 8GB --tmpdir=./tmp tmp/genome.bam
 
+# # Convert sam to bam and sort
+# samtools view -@ 8 -o tmp/genome.bam -b tmp/genome.sam
+# samtools sort -@ 8 -o tmp/genome.sorted.bam -m 8G tmp/genome.bam 
+
 # Call peaks from BAM
 Genrich -t tmp/genome.sorted.bam -o tmp/genome.narrowPeak -f tmp/genome_peaks.log -v
 
@@ -99,7 +105,7 @@ Genrich -t tmp/genome.sorted.bam -o tmp/genome.narrowPeak -f tmp/genome_peaks.lo
 cat tmp/genome.narrowPeak | bedtools sort | bedtools merge > $OUTPUT/peaks.bed
 
 # Create peak FASTA
-bedtools getfasta -fi $GENOME -bed peaks.bed -fo $OUTPUT/peaks.fa
+bedtools getfasta -fi tmp/genome.fa -bed peaks.bed -fo $OUTPUT/peaks.fa
 cat $OUTPUT/peaks.fa | awk '{if($1~/>/)print $1"\t"$1"\t"$1}' > $OUTPUT/t2g.txt
 sed -i 's/>//g' $OUTPUT/t2g.txt
 
