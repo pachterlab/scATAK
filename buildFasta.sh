@@ -105,7 +105,7 @@ Genrich -t tmp/genome.sorted.bam -o tmp/genome.narrowPeak -f tmp/genome_peaks.lo
 cat tmp/genome.narrowPeak | bedtools sort | bedtools merge > $OUTPUT/peaks.bed
 
 # Create peak FASTA
-bedtools getfasta -fi tmp/genome.fa -bed peaks.bed -fo $OUTPUT/peaks.fa
+bedtools getfasta -fi tmp/genome.fa -bed $OUTPUT/peaks.bed -fo $OUTPUT/peaks.fa
 cat $OUTPUT/peaks.fa | awk '{if($1~/>/)print $1"\t"$1"\t"$1}' > $OUTPUT/t2g.txt
 sed -i 's/>//g' $OUTPUT/t2g.txt
 
