@@ -76,6 +76,7 @@ fi
 # ATACMTX=atac.mtx
 # OUTPUT=./out
 
+mkdir -p $OUTPUT
 mkdir -p tmp
 
 # Get gene TSS from GTF 
