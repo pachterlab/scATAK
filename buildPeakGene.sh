@@ -24,7 +24,7 @@ usage () {
     exit 1
 }
 
-while getopts ":o:g:c:1:2:" opt; do
+while getopts ":o:g:p:b:m:" opt; do
     case $opt in
         o|--output)
             OUTPUT=$OPTARG
