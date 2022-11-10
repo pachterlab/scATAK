@@ -5,15 +5,17 @@
 # 3. Read 1 FASTQ
 # 4. Read 2 FASTQ
 # Output:
-# 1. peaks.fa
-# 2. t2g.txt
-# 3. peaks.bed
+# 1. peaks.bed
+
+
+# 2. peaks.fa
+# 3. t2g.txt
 
 usage () {
     echo "Usage: $0 [options]
     
     Options:
-    -o, --output           output FASTA
+    -o, --output           output folder
     -g, --genome           Genome primary assembly (fa.gz)
     -c, --cellbc           Fastq for the cell barcode
     -1, --read1            Fastq for biological paired end 1
@@ -97,8 +99,3 @@ Genrich -t tmp/genome.sorted.bam -o tmp/genome.narrowPeak -f tmp/genome_peaks.lo
 
 # Sort the peaks (prepare for slicing genome)
 cat tmp/genome.narrowPeak | bedtools sort | bedtools merge > $OUTPUT/peaks.bed
-
-# Create peak FASTA
-bedtools getfasta -fi tmp/genome.fa -bed $OUTPUT/peaks.bed -fo $OUTPUT/peaks.fa
-cat $OUTPUT/peaks.fa | awk '{if($1~/>/)print $1"\t"$1"\t"$1}' > $OUTPUT/t2g.txt
-sed -i 's/>//g' $OUTPUT/t2g.txt
