@@ -65,7 +65,7 @@ then
 fi
 
 # Merge peaks from multiple samples
-cat "$PEAKS" | bedtools sort | bedtools merge > $OUTPUT/peaks.merged.bed
+cat $PEAKS | bedtools sort | bedtools merge > $OUTPUT/peaks.merged.bed
 
 
 # Create merged peaks FASTA
