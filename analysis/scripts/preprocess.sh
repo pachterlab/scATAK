@@ -11,9 +11,7 @@ usage () {
     Options:
     -o, --output
     -p, --peaks 
-    -i, --index
     -x, --technology
-    -g, --t2g
     -w, --whitelist
     -c, --cbfastq
     -1, --r1fastq
@@ -22,7 +20,7 @@ usage () {
     exit 1
 }
 
-while getopts ":o:p:i:x:g:w:c:1:2:" opt; do
+while getopts ":o:p:x:w:c:1:2:" opt; do
     case $opt in
         o|--output)
             OUTPUT=$OPTARG
@@ -30,14 +28,8 @@ while getopts ":o:p:i:x:g:w:c:1:2:" opt; do
         p|--peaks)
             PEAKS=$OPTARG
             ;;
-        i|--INDEX)
-            INDEX=$OPTARG
-            ;;
         x|--technology)
             TECH=$OPTARG
-            ;;
-        g|--t2g)
-            T2G=$OPTARG
             ;;
         w|--whitelist)
             WL=$OPTARG
@@ -66,7 +58,7 @@ while getopts ":o:p:i:x:g:w:c:1:2:" opt; do
 done
 
 # check options        
-if [ -z "$OUTPUT" -o -z "$PEAKS" -o -z "$INDEX" -o -z "$TECH" -o -z "$T2G" -o -z "$WL" -o -z "$CBFQ" -o -z "$R1FQ" -o -z "$R2FQ" ]
+if [ -z "$OUTPUT" -o -z "$PEAKS" -o -z "$TECH" -o -z "$WL" -o -z "$CBFQ" -o -z "$R1FQ" -o -z "$R2FQ" ]
 then
     echo "Error"
     usage
@@ -82,12 +74,12 @@ cat $OUTPUT/peaks.merged.fa | awk '{if($1~/>/)print $1"\t"$1"\t"$1}' > $OUTPUT/t
 sed -i 's/>//g' $OUTPUT/t2g.txt
 
 # Build pseudoalignment index
-kallisto index -i $INDEX $OUTPUT/peaks.merged.fa
+kallisto index -i $OUTPUT/peaks.idx $OUTPUT/peaks.merged.fa
 
 # Quantify
 kb count \
--i $INDEX \
--g $T2G \
+-i $OUTPUT/peaks.idx \
+-g $OUTPUT/t2g.txt \
 -x $TECH \
 -o $OUTPUT \
 -w  $WL \
