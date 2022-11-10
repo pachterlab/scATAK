@@ -55,14 +55,6 @@ while getopts ":o:g:p:b:m:" opt; do
     esac
 done
 
-echo "Options"
-echo "-------"
-echo "GTF: ${GTF}"
-echo "ATACPEAKS: ${ATACPEAKS}"
-echo "ATACBCS: ${ATACBCS}"
-echo "ATACMTX: ${ATACMTX}"
-echo "OUTPUT: ${OUTPUT}"
-
 # check options        
 if [ -z "$OUTPUT" -o -z "$GTF" -o -z "$ATACPEAKS" -o -z "$ATACBCS" -o -z "$ATACMTX" ]
 then
@@ -114,8 +106,8 @@ rm tmp/region_index_tss_score.txt
 # Perform weighted sum based on peak <-> gene association 
 BC=1
 last_line=$(wc -l < $ATACMTX)
-awk -v bc=$BC -v last=$last_line 'NR==FNR{gene[$1]=$2;score[$1]=$3;next} ($2 in gene){if(bc!=$1 || NR==last){for (key in sum) {print bc" "key" "sum[key];} delete sum; bc=$1;} sum[gene[$2]]+=score[$2];}' tmp/region_index_tss_index_score.txt $ATACMTX > $OUTPUT/gene.mtx
-echo "$(wc -l < $ATACBCS) $(wc -l < $OUTPUT/pg.genes.txt) $(wc -l < $OUTPUT/gene.mtx)" > tmp/gene_mtx_sum
+awk -v bc=$BC -v last=$last_line 'NR==FNR{gene[$1]=$2;score[$1]=$3;next} ($2 in gene){if(bc!=$1 || NR==last){for (key in sum) {print bc" "key" "sum[key];} delete sum; bc=$1;} sum[gene[$2]]+=score[$2];}' tmp/region_index_tss_index_score.txt $ATACMTX > tmp/gene.mtx
+echo "$(wc -l < $ATACBCS) $(wc -l < $OUTPUT/pg.genes.txt) $(wc -l < tmp/gene.mtx)" > tmp/gene_mtx_sum
 cp $ATACBCS $OUTPUT/pg.barcodes.txt
-head -3 $ATACMTX | cat - tmp/gene_mtx_sum  $OUTPUT/gene.mtx > $OUTPUT/gene2.mtx
+head -3 $ATACMTX | cat - tmp/gene_mtx_sum  tmp/gene.mtx > $OUTPUT/gene2.mtx
 mv $OUTPUT/gene2.mtx $OUTPUT/pg.mtx
