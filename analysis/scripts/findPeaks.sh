@@ -76,8 +76,6 @@ BLEN=16 # Could be derived from fastq?
 mkdir -p tmp
 mkdir -p $OUTPUT
 
-zcat $GENOME | fold -w 80 > tmp/genome.fa
-
 # Build minimap2 index
 minimap2 -d tmp/minimap2_index.mmi $GENOME
 

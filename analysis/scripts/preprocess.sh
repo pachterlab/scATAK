@@ -10,7 +10,8 @@ usage () {
     
     Options:
     -o, --output
-    -p, --peaks 
+    -f, --fasta 
+    -g, --t2g 
     -x, --technology
     -w, --whitelist
     -c, --cbfastq
@@ -20,13 +21,16 @@ usage () {
     exit 1
 }
 
-while getopts ":o:p:x:w:c:1:2:" opt; do
+while getopts ":o:f:g:x:w:c:1:2:" opt; do
     case $opt in
         o|--output)
             OUTPUT=$OPTARG
             ;;
-        p|--peaks)
-            PEAKS=$OPTARG
+        f|--fasta)
+            FASTA=$OPTARG
+            ;;
+        g|--genemap)
+            T2G=$OPTARG
             ;;
         x|--technology)
             TECH=$OPTARG
@@ -58,30 +62,23 @@ while getopts ":o:p:x:w:c:1:2:" opt; do
 done
 
 # check options        
-if [ -z "$OUTPUT" -o -z "$PEAKS" -o -z "$TECH" -o -z "$WL" -o -z "$CBFQ" -o -z "$R1FQ" -o -z "$R2FQ" ]
+if [ -z "$OUTPUT" -o -z "$T2G" -o -z "$FASTA" -o -z "$TECH" -o -z "$WL" -o -z "$CBFQ" -o -z "$R1FQ" -o -z "$R2FQ" ]
 then
     echo "Error"
     usage
 fi
 
-# Merge peaks from multiple samples
-cat $PEAKS | bedtools sort | bedtools merge > $OUTPUT/peaks.merged.bed
-
-
-# Create merged peaks FASTA
-bedtools getfasta -fi tmp/genome.fa -bed $OUTPUT/peaks.merged.bed -fo $OUTPUT/peaks.merged.fa
-cat $OUTPUT/peaks.merged.fa | awk '{if($1~/>/)print $1"\t"$1"\t"$1}' > $OUTPUT/t2g.txt
-sed -i 's/>//g' $OUTPUT/t2g.txt
-
 # Build pseudoalignment index
-kallisto index -i $OUTPUT/peaks.idx $OUTPUT/peaks.merged.fa
+kallisto index -i tmp/peaks.idx $FASTA
 
 # Quantify
 kb count \
--i $OUTPUT/peaks.idx \
--g $OUTPUT/t2g.txt \
+-i tmp/peaks.idx \
+-g $T2G \
 -x $TECH \
 -o $OUTPUT \
 -w  $WL \
 --h5ad \
 $CBFQ $R1FQ $R2FQ
+
+kb count -i tmp/peaks.idx -g $T2G -x $TECH -o $OUTPUT -w  $WL --h5ad $CBFQ $R1FQ $R2FQ
