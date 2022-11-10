@@ -108,14 +108,14 @@ awk '{print $4}' tmp/tss.bed | sort | uniq > $OUTPUT/pg.genes.txt
 
 # What does this do??
 awk 'NR==FNR{j++;Arr[$1]=NR;next} ($1 in Arr){print Arr[$1]"\t"$2"\t"$3}' $ATACPEAKS tmp/region_tss_score.txt > tmp/region_index_tss_score.txt
-awk 'NR==FNR{j++;Arr[$1]=NR;next} ($2 in Arr){print $1"\t"Arr[$2]"\t"$3}' $OUTPUT/gene.genes.txt tmp/region_index_tss_score.txt > tmp/region_index_tss_index_score.txt
+awk 'NR==FNR{j++;Arr[$1]=NR;next} ($2 in Arr){print $1"\t"Arr[$2]"\t"$3}' $OUTPUT/pg.genes.txt tmp/region_index_tss_score.txt > tmp/region_index_tss_index_score.txt
 rm tmp/region_index_tss_score.txt
 
 # Perform weighted sum based on peak <-> gene association 
 BC=1
 last_line=$(wc -l < $ATACMTX)
 awk -v bc=$BC -v last=$last_line 'NR==FNR{gene[$1]=$2;score[$1]=$3;next} ($2 in gene){if(bc!=$1 || NR==last){for (key in sum) {print bc" "key" "sum[key];} delete sum; bc=$1;} sum[gene[$2]]+=score[$2];}' tmp/region_index_tss_index_score.txt $ATACMTX > $OUTPUT/gene.mtx
-echo "$(wc -l < $ATACBCS) $(wc -l < $OUTPUT/gene.genes.txt) $(wc -l < $OUTPUT/gene.mtx)" > tmp/gene_mtx_sum
+echo "$(wc -l < $ATACBCS) $(wc -l < $OUTPUT/pg.genes.txt) $(wc -l < $OUTPUT/gene.mtx)" > tmp/gene_mtx_sum
 cp $ATACBCS $OUTPUT/pg.barcodes.txt
 head -3 $ATACMTX | cat - tmp/gene_mtx_sum  $OUTPUT/gene.mtx > $OUTPUT/gene2.mtx
 mv $OUTPUT/gene2.mtx $OUTPUT/pg.mtx
