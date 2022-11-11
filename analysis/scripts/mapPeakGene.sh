@@ -107,8 +107,8 @@ rm tmp/region_index_tss_score.txt
 BC=1
 last_line=$(wc -l < $ATACMTX)
 awk -v bc=$BC -v last=$last_line 'NR==FNR{gene[$1]=$2;score[$1]=$3;next} ($2 in gene){if(bc!=$1 || NR==last){for (key in sum) {print bc" "key" "sum[key];} delete sum; bc=$1;} sum[gene[$2]]+=score[$2];}' tmp/region_index_tss_index_score.txt $ATACMTX > tmp/gene.mtx
-echo "$(wc -l < $ATACBCS) $(wc -l < $OUTPUT/pg.genes.txt) $(wc -l < tmp/gene.mtx)" > tmp/gene_mtx_sum
-cp $ATACBCS $OUTPUT/pg.barcodes.txt
 tail -n +2 tmp/gene.mtx > tmp/nohead.gene.mtx
+echo "$(wc -l < $ATACBCS) $(wc -l < $OUTPUT/pg.genes.txt) $(wc -l < tmp/nohead.gene.mtx)" > tmp/gene_mtx_sum
+cp $ATACBCS $OUTPUT/pg.barcodes.txt
 head -2 $ATACMTX | cat - tmp/gene_mtx_sum tmp/nohead.gene.mtx > $OUTPUT/gene2.mtx
 mv $OUTPUT/gene2.mtx $OUTPUT/pg.mtx
