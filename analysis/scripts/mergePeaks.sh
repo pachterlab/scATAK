@@ -11,17 +11,21 @@ usage () {
     Options:
     -o, --output
     -p, --peaks
+    -g, --genome 
     "
     exit 1
 }
 
-while getopts ":o:p:" opt; do
+while getopts ":o:p:g:" opt; do
     case $opt in
         o|--output)
             OUTPUT=$OPTARG
             ;;
         p|--peaks)
             PEAKS=$OPTARG
+            ;;
+        g|--genome)
+            GENOME=$OPTARG
             ;;
         h)
             usage
@@ -38,7 +42,7 @@ while getopts ":o:p:" opt; do
 done
 
 # check options        
-if [ -z "$OUTPUT" -o -z "$PEAKS" ]
+if [ -z "$OUTPUT" -o -z "$PEAKS" -o -z "$GENOME" ]
 then
     echo "Error"
     usage

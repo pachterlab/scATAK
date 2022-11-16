@@ -81,4 +81,5 @@ kb count \
 --h5ad \
 $CBFQ $R1FQ $R2FQ
 
-kb count -i tmp/peaks.idx -g $T2G -x $TECH -o $OUTPUT -w  $WL --h5ad $CBFQ $R1FQ $R2FQ
+# Count multiplicites (this will need to be exposed as an option to kb at some point)
+bustools count -o out/counts_unfiltered/cells_x_genes -g t2g.txt -e out/matrix.ec -t out/transcripts.txt --genecounts --cm out/output.unfiltered.bus
