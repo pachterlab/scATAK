@@ -82,4 +82,4 @@ kb count \
 $CBFQ $R1FQ $R2FQ
 
 # Count multiplicites (this will need to be exposed as an option to kb at some point)
-bustools count -o out/counts_unfiltered/cells_x_genes -g t2g.txt -e out/matrix.ec -t out/transcripts.txt --genecounts --cm out/output.unfiltered.bus
+bustools count -o $OUTPUT/counts_unfiltered/cells_x_genes -g $T2G -e $OUTPUT/matrix.ec -t $OUTPUT/transcripts.txt --genecounts --cm $OUTPUT/output.unfiltered.bus
